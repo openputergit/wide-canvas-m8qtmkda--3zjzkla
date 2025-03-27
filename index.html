@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Year Spin & Win | Cosmetics Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            transform: rotate(0deg);
+        }
+
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .pointer {
+            position: absolute;
+            top: 50%;
+            right: -30px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+            border-left: 30px solid #ff0000;
+            z-index: 10;
+        }
+
+        .spin-button-fixed {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            position: absolute;
+            animation: confetti 1s ease-out forwards;
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(720deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Fixed Spin Button -->
+    <div class="fixed bottom-4 right-4 z-50">
+        <button onclick="showSpinWheel()" class="spin-button-fixed bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-6 rounded-full shadow-lg flex items-center">
+            <i class="bi bi-gift-fill mr-2"></i> Spin & Win
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8">Cosmetics Store</h1>
+        <!-- Your existing content here -->
+    </div>
+
+    <!-- Spin Wheel Modal -->
+    <div id="spinWheelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Spin & Win!</h2>
+                <button onclick="closeSpinWheel()" class="text-gray-500 hover:text-gray-700">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            
+            <div class="wheel-container mx-auto">
+                <div class="wheel" id="wheel">
+                    <div class="pointer"></div>
+                </div>
+            </div>
+            
+            <button onclick="spinWheel()" id="spinButton" class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                SPIN NOW
+            </button>
+        </div>
+    </div>
+
+    <!-- Winner Modal -->
+    <div id="winnerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4 text-center">
+            <h2 class="text-3xl font-bold mb-4">🎉 Congratulations! 🎉</h2>
+            <p class="text-xl mb-4" id="prizeText"></p>
+            <p class="text-lg mb-6">Your Coupon Code: <span id="couponCode" class="font-bold text-blue-600"></span></p>
+            <button onclick="closeWinnerModal()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg">
+                Claim Now
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const prizes = [
+            "Flat 25% Off on All Products",
+            "Free SPF50 Sunscreen [100ML]",
+            "Flat 50% Off for Product of the Day!",
+            "3 Months Premium Membership"
+        ];
+
+        let isNewUser = Math.random() < 0.5; // Simulate user type
+        let spinCount = 0;
+        let hasWonPremium = false;
+
+        function generateCouponCode() {
+            return 'NY' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        function showSpinWheel() {
+            document.getElementById('spinWheelModal').classList.remove('hidden');
+            setupWheel();
+        }
+
+        function closeSpinWheel() {
+            document.getElementById('spinWheelModal').classList.add('hidden');
+        }
+
+        function setupWheel() {
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = '<div class="pointer"></div>';
+            
+            prizes.forEach((prize, index) => {
+                const section = document.createElement('div');
+                section.className = 'wheel-section';
+                section.style.transform = `rotate(${index * 90}deg)`;
+                section.style.backgroundColor = `hsl(${index * 90}, 70%, 50%)`;
+                section.textContent = prize;
+                wheel.appendChild(section);
+            });
+        }
+
+        function spinWheel() {
+            const wheel = document.getElementById('wheel');
+            document.getElementById('spinButton').disabled = true;
+
+            let finalRotation;
+            if (!isNewUser && !hasWonPremium && spinCount < 4) {
+                // 70% chance for premium membership for old users
+                if (Math.random() < 0.7) {
+                    finalRotation = 3 * 90; // Premium membership sector
+                    hasWonPremium = true;
+                } else {
+                    finalRotation = Math.floor(Math.random() * 4) * 90;
+                }
+            } else {
+                finalRotation = Math.floor(Math.random() * 4) * 90;
+            }
+
+            const totalRotation = 1800 + finalRotation; // 5 full spins + final position
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+            setTimeout(() => {
+                const winningPrize = prizes[finalRotation / 90];
+                showWinner(winningPrize);
+                document.getElementById('spinButton').disabled = false;
+                spinCount++;
+            }, 4000);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 1000);
+            }
+        }
+
+        function showWinner(prize) {
+            document.getElementById('prizeText').textContent = `You won: ${prize}`;
+            document.getElementById('couponCode').textContent = generateCouponCode();
+            document.getElementById('winnerModal').classList.remove('hidden');
+            createConfetti();
+            closeSpinWheel();
+        }
+
+        function closeWinnerModal() {
+            document.getElementById('winnerModal').classList.add('hidden');
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
